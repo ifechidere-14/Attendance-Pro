@@ -4,6 +4,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const PGStore = require('connect-pg-simple')(session);
 const path = require('path');
 
 const pool = require('./db/pool');
@@ -25,17 +26,32 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(
-  session({
-    name: 'attendance.sid',
-    secret: process.env.SESSION_SECRET || 'attendance-pro-dev-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 8 } // 8 hours
-  })
-);
+/* 
+   Session storage backed by CockroachDB (via pg).
+   replaces the default MemoryStore so sessions survive dyno restarts.
+*/
+const sessionMiddleware = session({
+  store: new PGStore({
+    pool,
+    table_name: 'sessions',
+    createTableIfMissing: true,
+    ttl: 24 * 60 * 60 // 1 day session TTL
+  }),
+  name: 'attendance.sid',
+  secret: process.env.SESSION_SECRET || 'attendance-pro-dev-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    httpOnly: true, 
+    sameSite: 'lax', 
+    maxAge: 1000 * 60 * 60 * 8,  // 8 hours
+    secure: process.env.NODE_ENV === 'production'  // https only in prod
+  }
+});
 
-// Small request logger
+app.use(sessionMiddleware);
+
+/* Small request logger */
 app.use((req, _res, next) => {
   if (req.path.startsWith('/api')) {
     console.log(`${new Date().toISOString()}  ${req.method} ${req.path}`);
@@ -50,8 +66,8 @@ app.use((req, _res, next) => {
 // Health check — verifies the CockroachDB connection
 app.get('/api/health', async (_req, res) => {
   try {
-    const { rows } = await pool.query('SELECT version() AS v, now() AS t');
-    res.json({ status: 'ok', database: 'connected', server_time: rows[0].t, version: rows[0].v });
+    const { rows } = await pool.query('SELECT version() AS version, now() AS t');
+    res.json({ status: 'ok', database: 'connected', server_time: rows[0].t, version: rows[0].version });
   } catch (err) {
     res.status(500).json({ status: 'error', database: 'disconnected', message: err.message });
   }
@@ -72,24 +88,15 @@ app.get('/app', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'app.
 
 app.get('/', (_req, res) => res.redirect('/app'));
 
-// Catch-all API 404
-app.use('/api', (_req, res) => res.status(404).json({ error: 'Endpoint not found' }));
-
-/* ------------------------------------------------------------------ */
-/*  Start                                                              */
-/* ------------------------------------------------------------------ */
-app.listen(PORT, async () => {
-  console.log('──────────────────────────────────────────────────────');
-  console.log('  Attendance Pro — high-class attendance system');
+app.listen(PORT, () => {
+  console.log(`──────────────────────────────────────────────────────`);
+  console.log(`  Attendance Pro — high-class attendance system`);
   console.log(`  Web UI      : http://localhost:${PORT}/app`);
   console.log(`  Health check: http://localhost:${PORT}/api/health`);
   console.log('──────────────────────────────────────────────────────');
-  try {
-    await pool.query('SELECT 1');
+  pool.query('SELECT 1').then(() => {
     console.log('  ✓ CockroachDB connection OK');
-  } catch (err) {
+  }).catch((err) => {
     console.error('  ✖ CockroachDB connection FAILED:', err.message);
-    console.error('    → Check DATABASE_URL in .env and run "npm run db:init" first.');
-  }
-  console.log('──────────────────────────────────────────────────────');
+  });
 });
