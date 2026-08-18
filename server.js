@@ -31,10 +31,10 @@ app.use(express.static(path.join(__dirname, 'public')));
    replaces the default MemoryStore so sessions survive dyno restarts.
 */
 const sessionMiddleware = session({
-  store: new PGStore({
+    store: new PGStore({
     pool,
-    table_name: 'sessions',
-    createTableIfMissing: true,
+    tableName: 'sessions',
+    createTableIfMissing: false,
     ttl: 24 * 60 * 60 // 1 day session TTL
   }),
   name: 'attendance.sid',

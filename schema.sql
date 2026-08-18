@@ -114,6 +114,19 @@ SELECT 'admin', 'admin@attendance.local',
        'System Administrator', 'admin'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin');
 
+-- ----------------------------------------------------------------------------
+--  SESSIONS  — express-session store table (connect-pg-simple)
+--  CockroachDB-compatible definition (no "NOT DEFERRABLE" syntax).
+--  createTableIfMissing is disabled in server.js so this table is created here.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sessions (
+    sid    TEXT      NOT NULL PRIMARY KEY,
+    sess   JSONB     NOT NULL,
+    expire TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_expire ON sessions (expire);
+
 -- ============================================================================
 --  DONE — schema applied successfully.
 -- ============================================================================
