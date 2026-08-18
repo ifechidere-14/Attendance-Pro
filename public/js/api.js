@@ -6,7 +6,7 @@ const API = {
   async request(path, options = {}) {
     const opts = { headers: { 'Content-Type': 'application/json' }, ...options };
     if (opts.body && typeof opts.body === 'object') opts.body = JSON.stringify(opts.body);
-    const res = await fetch(path, opts);
+    const res = await fetch(path, { ...opts, credentials: 'include' });
     let data = {};
     try { data = await res.json(); } catch (_) { /* non-JSON response */ }
     if (res.status === 401) {
