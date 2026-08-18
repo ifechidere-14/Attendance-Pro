@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In / Register · Attendance Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="login-body">
+  <div class="login-shell">
+    <div class="login-hero">
+      <div class="login-hero-content">
+        <div class="brand-mark">AP</div>
+        <h1>Attendance&nbsp;Pro</h1>
+        <p>The high-class dynamic attendance management platform built for modern institutions.</p>
+        <ul class="hero-points">
+          <li>Real-time attendance tracking per class</li>
+          <li>Insightful analytics, charts &amp; reports</li>
+          <li>Secure authentication, backed by CockroachDB</li>
+        </ul>
+      </div>
+    </div>
+    <div class="login-panel">
+      <form id="auth-form" class="login-form" autocomplete="on">
+        <h2 id="auth-heading">Sign In</h2>
+        <p id="auth-subtext">Enter your credentials below.</p>
+        <div id="auth-error" class="alert alert-error" hidden></div>
+        <div class="field">
+          <label for="auth-username">Username or Email</label>
+          <input type="text" id="auth-username" name="username" autocomplete="username" placeholder="e.g. admin" required>
+        </div>
+        <div class="field">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <div id="auth-switch" style="margin-top:18px; text-align:center">
+          <span>Don't have an account? <a href="javascript:void(0)" id="show-signup">Sign Up</a></span>
+          <span style="margin-left:12px; display:none" id="show-login">Log In</span>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="auth-btn">Sign In</button>
+        <p class="demo-hint">Demo credentials — user: <strong>admin</strong> · pass: <strong>Admin@1234</strong></p>
+        <div id="signup-form" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid var(--border)">
+          <h3 style="margin-top:0; margin-bottom:16px;">Create Account</h3>
+          <div class="field"><label>Full Name</label><input name="full_name" placeholder="Your Full Name" required></div>
+          <div class="field"><label>Username</label><input name="signup-username" placeholder="choose-a-username" required></div>
+          <div class="field"><label>Email</label><input name="signup-email" type="email" placeholder="you@school.edu" required></div>
+          <div class="field"><label>Password</label><input name="signup-password" type="password" placeholder="••••••••" required></div>
+          <button type="submit" class="btn btn-primary w-100" style="margin-top:12px" id="signup-btn">Create Account</button>
+          <p class="muted small" style="margin-top:12px; text-align:center">Already have an account? <a href="javascript:void(0)" id="back-to-login">Log In</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="/js/api.js"></script>
+  <script src="/js/login.js"></script>
+</body>
+</html>
