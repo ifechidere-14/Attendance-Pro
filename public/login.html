@@ -40,18 +40,21 @@
           <span>Don't have an account? <a href="javascript:void(0)" id="show-signup">Sign Up</a></span>
           <span style="margin-left:12px; display:none" id="show-login">Log In</span>
         </div>
-        <button type="submit" class="btn btn-primary btn-block" id="auth-btn">Sign In</button>
+                <button type="submit" class="btn btn-primary btn-block" id="auth-btn">Sign In</button>
         <p class="demo-hint">Demo credentials — user: <strong>admin</strong> · pass: <strong>Admin@1234</strong></p>
-        <div id="signup-form" style="display:none; margin-top:24px; padding-top:24px; border-top:1px solid var(--border)">
-          <h3 style="margin-top:0; margin-bottom:16px;">Create Account</h3>
-          <div class="field"><label>Full Name</label><input name="full_name" placeholder="Your Full Name" required></div>
-          <div class="field"><label>Username</label><input name="signup-username" placeholder="choose-a-username" required></div>
-          <div class="field"><label>Email</label><input name="signup-email" type="email" placeholder="you@school.edu" required></div>
-          <div class="field"><label>Password</label><input name="signup-password" type="password" placeholder="••••••••" required></div>
-          <button type="submit" class="btn btn-primary w-100" style="margin-top:12px" id="signup-btn">Create Account</button>
-          <p class="muted small" style="margin-top:12px; text-align:center">Already have an account? <a href="javascript:void(0)" id="back-to-login">Log In</a></p>
-        </div>
       </form>
+
+      <!-- Signup form is outside the login form so hiding the login form doesn't hide sign-up -->
+      <div id="signup-form" class="login-form" style="display:none">
+        <h2 style="margin-top:0;">Create Account</h2>
+        <p style="color:var(--text-secondary); margin-bottom:20px">Enter your details to register.</p>
+        <div class="field"><label for="signup-full-name">Full Name</label><input id="signup-full-name" name="full_name" placeholder="Your Full Name" required></div>
+        <div class="field"><label for="signup-username-2">Username</label><input id="signup-username-2" name="signup-username" placeholder="choose-a-username" required></div>
+        <div class="field"><label for="signup-email-2">Email</label><input id="signup-email-2" type="email" name="signup-email" placeholder="you@school.edu" required></div>
+        <div class="field"><label for="signup-password-2">Password</label><input id="signup-password-2" type="password" name="signup-password" placeholder="••••••••" required></div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:12px" id="signup-btn">Create Account</button>
+        <p class="muted small" style="margin-top:12px; text-align:center">Already have an account? <a href="javascript:void(0)" id="back-to-login">Log In</a></p>
+      </div>
     </div>
   </div>
   <script src="/js/api.js"></script>
