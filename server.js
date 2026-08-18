@@ -24,6 +24,11 @@ const PORT = process.env.PORT || 3000;
 /* ------------------------------------------------------------------ */
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files with cache-busting disabled for JS/CSS so the
+// browser always picks up the latest code (prevents stale api.js).
+app.use('/js', express.static(path.join(__dirname, 'public', 'js'), { maxAge: 0, etag: false }));
+app.use('/css', express.static(path.join(__dirname, 'public', 'css'), { maxAge: 0, etag: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* 
@@ -31,7 +36,7 @@ app.use(express.static(path.join(__dirname, 'public')));
    replaces the default MemoryStore so sessions survive dyno restarts.
 */
 const sessionMiddleware = session({
-    store: new PGStore({
+  store: new PGStore({
     pool,
     tableName: 'sessions',
     createTableIfMissing: false,
@@ -41,11 +46,11 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'attendance-pro-dev-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
-    httpOnly: true, 
-    sameSite: 'lax', 
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
     maxAge: 1000 * 60 * 60 * 8,  // 8 hours
-    secure: process.env.NODE_ENV === 'production'  // https only in prod
+    secure: process.env.COOKIE_SECURE === 'true'  // HTTPS only when explicitly enabled
   }
 });
 
