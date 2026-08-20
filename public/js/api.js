@@ -88,3 +88,11 @@ function chartAvailable() { return typeof window.Chart !== 'undefined'; }
 function moneyLikePct(present, total) {
   return total === 0 ? 0 : Math.round((present / total) * 100);
 }
+
+/* Extract a download filename from headers' Content-Disposition. */
+function filenameFrom(res) {
+  const cd = res.headers && res.headers.get('content-disposition');
+  if (!cd) return null;
+  const m = /filename="?([^";]+)"?/.exec(cd);
+  return m ? m[1] : null;
+}

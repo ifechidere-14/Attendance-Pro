@@ -61,6 +61,37 @@ async function init() {
   // Refresh current view
   document.getElementById('refresh-btn').addEventListener('click', () => reroute());
 
+  // Download the Attendance Pro application (ZIP source bundle)
+  const downloadBtn = document.getElementById('download-app-btn');
+  downloadBtn.addEventListener('click', async () => {
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = '⬇ Building…';
+    try {
+      // fetch with credentials: include so the session cookie is sent;
+      // the server streams back an application/zip attachment.
+      const res = await fetch('/api/download/app', { credentials: 'include' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => null);
+        throw new Error((err && err.error) || 'Download failed.');
+      }
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = filenameFrom(res) || 'AttendancePro-app.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast('Download started — Attendance Pro app package.');
+    } catch (err) {
+      toast(err.message || 'Download failed.', 'error');
+    } finally {
+      downloadBtn.disabled = false;
+      downloadBtn.textContent = '⬇ Download App';
+    }
+  });
+
   window.addEventListener('hashchange', reroute);
   const start = (window.location.hash || '#/dashboard').slice(2);
   navigate(start || 'dashboard');

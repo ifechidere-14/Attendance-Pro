@@ -93,6 +93,85 @@ app.get('/app', (_req, res) => res.sendFile(path.join(__dirname, 'public', 'app.
 
 app.get('/', (_req, res) => res.redirect('/app'));
 
+/* ------------------------------------------------------------------ */
+/*  Application download — bundles the project source into a ZIP       */
+/* ------------------------------------------------------------------ */
+const { ZipArchive } = require('archiver');
+const fs = require('fs');
+const pathLib = require('path');
+
+function buildFileList(dir, base, out, ignore) {
+  let entries;
+  try { entries = fs.readdirSync(dir); } catch (_) { return; }
+  for (const entry of entries) {
+    const seg = entry.toLowerCase();
+    if (ignore.includes(seg)) continue;                    // skip folder/file by name
+    const abs = pathLib.join(dir, entry);
+    const rel = base ? pathLib.join(base, entry) : entry;
+    const stat = fs.statSync(abs);
+    if (stat.isDirectory()) {
+      buildFileList(abs, rel, out, ignore);
+    } else if (stat.isFile()) {
+      out.push(rel);
+    }
+  }
+}
+
+// Download the full Attendance Pro application as a ZIP bundle.
+// The archive contains the complete source (backend, frontend, schema,
+// seed, docs) so you can host the app anywhere. Secrets (.env, logs,
+// node_modules, .git) are excluded.
+app.get('/api/download/app', requireAuth, (req, res) => {
+  const version = require('./package.json').version || '1.0.0';
+  const stamp = new Date().toISOString().slice(0, 10);
+  const filename = `AttendancePro-v${version}-${stamp}.zip`;
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'no-store');
+
+  const archive = new ZipArchive({ zlib: { level: 9 } });
+  archive.on('error', (err) => {
+    console.error('ZIP build error:', err.message);
+    if (!res.headersSent) res.status(500).end('Could not build download archive.');
+  });
+  archive.pipe(res);
+
+  try {
+    // Add a small install note
+    archive.append(Buffer.from(
+      'ATTENDANCE PRO — APPLICATION PACKAGE\n' +
+      '====================================\n' +
+      'This ZIP is the full Attendance Pro application (source code).\n\n' +
+      'To install / deploy:\n' +
+      '  1. Unzip the folder.\n' +
+      '  2. Create a .env file from .env.example and paste your CockroachDB connection string.\n' +
+      '  3. Run:  npm install   then   npm start\n' +
+      '  4. Open  http://localhost:3000/login   (admin / Admin@1234)\n\n' +
+      `Generated: ${new Date().toUTCString()}\n`
+    ), { name: 'INSTALL-NOTES.txt' });
+
+    // Collect every project file to bundle (relative paths)
+    const ignore = [
+      'node_modules', '.git', '.env', 'server-out.log', 'server-err.log',
+      'login.json', 'cookies.txt', 'test-download.zip', 'server-test.log',
+      'server-test.err', 'attendance_pro.zip', 'server.js.new'
+    ];
+    const files = [];
+    buildFileList(__dirname, '', files, ignore);
+
+    for (const rel of files) {
+      if (/\.log$/.test(rel) || /\.err$/.test(rel)) continue;
+      archive.file(pathLib.join(__dirname, rel), { name: rel.replace(/\\/g, '/') });
+    }
+
+    archive.finalize();
+  } catch (err) {
+    console.error('ZIP build error:', err.message);
+    if (!res.headersSent) res.status(500).end('Could not build download archive.');
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`──────────────────────────────────────────────────────`);
   console.log(`  Attendance Pro — high-class attendance system`);
