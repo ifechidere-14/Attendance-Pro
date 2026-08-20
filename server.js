@@ -25,6 +25,15 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Service worker & PWA manifest must never be cached by the browser,
+// otherwise updates won't be picked up. Serve them before static files.
+app.use((req, _res, next) => {
+  if (req.path === '/sw.js' || req.path === '/manifest.json') {
+    _res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  }
+  next();
+});
+
 // Serve static files with cache-busting disabled for JS/CSS so the
 // browser always picks up the latest code (prevents stale api.js).
 app.use('/js', express.static(path.join(__dirname, 'public', 'js'), { maxAge: 0, etag: false }));
@@ -142,12 +151,18 @@ app.get('/api/download/app', requireAuth, (req, res) => {
     archive.append(Buffer.from(
       'ATTENDANCE PRO — APPLICATION PACKAGE\n' +
       '====================================\n' +
-      'This ZIP is the full Attendance Pro application (source code).\n\n' +
-      'To install / deploy:\n' +
-      '  1. Unzip the folder.\n' +
-      '  2. Create a .env file from .env.example and paste your CockroachDB connection string.\n' +
-      '  3. Run:  npm install   then   npm start\n' +
-      '  4. Open  http://localhost:3000/login   (admin / Admin@1234)\n\n' +
+      'This is the complete Attendance Pro application.\n\n' +
+      '► EASIEST WAY (one-click install):\n' +
+      '   • Windows — double-click  install.bat\n' +
+      '   • macOS/Linux — run  install.sh\n' +
+      '   The installer installs dependencies, sets up the database,\n' +
+      '   adds a desktop shortcut, then starts the app and opens it in\n' +
+      '   your browser. Login with  admin / Admin@1234\n\n' +
+      '► MANUAL SETUP (advanced):\n' +
+      '   1. Copy .env.example → .env and paste your CockroachDB URL.\n' +
+      '   2. npm install\n' +
+      '   3. npm run db:init   (creates tables + admin account)\n' +
+      '   4. npm start         then open http://localhost:3000/login\n\n' +
       `Generated: ${new Date().toUTCString()}\n`
     ), { name: 'INSTALL-NOTES.txt' });
 

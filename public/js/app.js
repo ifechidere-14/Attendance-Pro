@@ -2,6 +2,26 @@
    Attendance Pro — application shell & view router
    ============================================================ */
 
+/* ---------- PWA: register the service worker ---------- */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    .catch((err) => console.warn('Service worker registration failed:', err));
+}
+
+/* ---------- PWA: "Install App" (like a Play Store install) ---------- */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const ib = document.getElementById('install-app-btn');
+  if (ib) ib.hidden = false;
+});
+window.addEventListener('appinstalled', () => {
+  const ib = document.getElementById('install-app-btn');
+  if (ib) ib.hidden = true;
+  toast('Attendance Pro installed! 🎉 Look for it in your apps / desktop.');
+});
+
 const VIEWS = {
   dashboard: { title: 'Dashboard', render: renderDashboard },
   students:  { title: 'Students',  render: renderStudents },
@@ -60,6 +80,23 @@ async function init() {
 
   // Refresh current view
   document.getElementById('refresh-btn').addEventListener('click', () => reroute());
+
+  // Install Attendance Pro as an app (PWA / Play-Store-style install)
+  const installBtn = document.getElementById('install-app-btn');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const { outcome } = await deferredInstallPrompt.userChoice;
+        if (outcome === 'accepted') toast('Installing Attendance Pro…');
+        else toast('You can install later from the browser menu.', 'info');
+        deferredInstallPrompt = null;
+        installBtn.hidden = true;
+      } else {
+        toast('Tip: use Add to Home Screen / “Install app” in your browser menu.', 'info');
+      }
+    });
+  }
 
   // Download the Attendance Pro application (ZIP source bundle)
   const downloadBtn = document.getElementById('download-app-btn');

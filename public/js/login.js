@@ -2,6 +2,12 @@
    Attendance Pro — login page logic
    ============================================================ */
 
+/* PWA: register the service worker so the installed app works offline. */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    .catch((err) => console.warn('Service worker registration failed:', err));
+}
+
 const form = document.getElementById('auth-form');
 const errorBox = document.getElementById('auth-error');
 const btn = document.getElementById('auth-btn');
